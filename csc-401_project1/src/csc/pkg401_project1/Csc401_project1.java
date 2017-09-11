@@ -7,7 +7,7 @@ import java.util.Scanner;
  *
  * @author Kris Giddens and Tony Mendoza
  */
-
+ 
 public class Csc401_project1 {
 	static ArrayList<Person> men;
 	static ArrayList<Person> women;
