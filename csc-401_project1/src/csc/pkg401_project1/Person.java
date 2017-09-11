@@ -55,7 +55,7 @@ public class Person {
 	public void setPreference(int index, int value) {
 		preferences[index] = value;
 	}
-
+ 
 	// Shuffle the deck
 	public void shufflePreferences() {
 		for (int i = 0; i < preferences.length; i++) { // For every card
