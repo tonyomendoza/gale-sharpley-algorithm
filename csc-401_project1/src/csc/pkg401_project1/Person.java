@@ -21,7 +21,7 @@ public class Person {
 	int partner;
 	// references for the preferences. Stuctures store them for the program.
 	int[] preferences;
-	int[] matches;
+        int preferenceCounter;
 
         // Person constructor
 	public Person(int id, BinaryGender gender) {
@@ -29,11 +29,7 @@ public class Person {
 		this.gender = gender;
 		name = gender.toString() + id;
 		this.partner = -1;
-	}
-	
-        // Copies the matching list from the original preference list
-	public void resetMatchings() {
-		this.matches = preferences.clone();
+                preferenceCounter = 0;
 	}
 
         // gets partner
@@ -58,16 +54,17 @@ public class Person {
 	public int[] getPreferences() {
 		return preferences;
 	}
-
-        // gets a specific preference to return
-	public int getPreference(int man) {
-		return matches[man];
-	}
-
-        // set a match to a value to determine whether the proposal passed or not
-	public void setPreference(int index, int value) {
-		matches[index] = value;
-	}
+        
+        public void setPreferenceCounter(int value){
+            preferenceCounter += value;
+        }
+        public void resetPreferenceCounter(){
+            preferenceCounter = 0;
+        }
+        
+        public int getPreferenceCounter(){
+            return preferenceCounter;
+        }
  
 	// Shuffle the preferences, used during initialization
 	public void shufflePreferences() {
