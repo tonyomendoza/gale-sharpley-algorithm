@@ -1,6 +1,8 @@
 package csc.pkg401_project1;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.Scanner;
 
 /**
@@ -8,14 +10,15 @@ import java.util.Scanner;
  * @author Kris Giddens and Tony Mendoza
  */
 public class Csc401_project1 {
+
     // structures to hold are person objects
     static ArrayList<Person> men;
     static ArrayList<Person> women;
     // data used to hold 
     static int unmatchedMen = 0;
     static int proposalCount;
+    static HashMap<String, Integer> frequencyMap = new HashMap<String, Integer>();
 
-    
     public static void main(String[] args) {
         System.out.println("=> Application: gale-sharpley-algorithm");
         Scanner input = new Scanner(System.in);
@@ -26,7 +29,15 @@ public class Csc401_project1 {
         for (int m = 0; m < men.size(); m++) {
             gsAlgorithm(m);
             printMatches(m);
+            calculateProposalCount();
             resetMatches();
+        }
+
+        System.out.println("\nThe following numbers are the total number of proposal counts each \n"
+                + "time through the algorithm folowed by the frequency of that proposal count\n"
+                + "Example (total proposal count : frequency of proposal count)");
+        for (Entry<String, Integer> entry : frequencyMap.entrySet()) {
+            System.out.println(entry.getKey() + " : " + entry.getValue());
         }
     }
 
@@ -55,16 +66,14 @@ public class Csc401_project1 {
         for (int m = 0; m < size; m++) { // for every man
             men.get(m).setPreferences(women); // set the preferences for a man
             men.get(m).shufflePreferences(); // shuffle the preferences
-            
+
             // Print the preferences
-            System.out.print("\t\t=>" + men.get(m).toString() + ": ");
+            System.out.print("\t\t=> " + men.get(m).toString() + ": ");
             for (int i = 0; i < men.get(m).getPreferences().length; i++) {
                 System.out.print("F" + men.get(m).getPreferences()[i] + " ");
             }
             System.out.println();
-            
-            // reset the matching list with original preferences
-            men.get(m).resetMatchings();
+
         }
 
         // Create the individualized preference lists for women
@@ -73,97 +82,65 @@ public class Csc401_project1 {
             women.get(f).setPreferences(men); // set the preferences of a woman
             women.get(f).shufflePreferences(); // shuffle the preferences
             // Print the preferences
-            System.out.print("\t\t=>" + women.get(f).toString() + ": ");
+            System.out.print("\t\t=> " + women.get(f).toString() + ": ");
             for (int i = 0; i < women.get(f).getPreferences().length; i++) {
                 System.out.print("M" + women.get(f).getPreferences()[i] + " ");
             }
             System.out.println();
-        
-            // reset the matching list copy with original preferences
-            women.get(f).resetMatchings();
         }
     }
 
     // determines which man the woman prefers
     static boolean WPrefersMOverM1(Person woman, Person m, Person m1) {
-        for (int i = 0; i < women.size(); i++) {
-            // if the man proposing is higher on the woman's preference list return true
-            // els return false
-            if (woman.getPreference(i) == m.getID()) {
+        // 
+        for (int i = 0; i < woman.getPreferences().length; i++) {
+            if (woman.getPreferences()[i] == m.getID()) {
                 return true;
             }
-            if (woman.getPreference(i) == m1.getID()) {
+            if (woman.getPreferences()[i] == m1.getID()) {
                 return false;
             }
         }
         return false;
     }
 
-    // The gale-shapely algorithm used to complete the project. It matches up the couples.
+    // the algorith mthat matches the pairs
     static void gsAlgorithm(int startingMan) {
+        // reset stuff
         int count = startingMan;
         unmatchedMen = men.size();
-        // while there is still a free man
+        // while there is a man that has not been matched
         while (unmatchedMen != 0) {
-            // if the selected man is free continue
-            // else move to next man in list
-            if (men.get(count).getPartner() == -1) {
-                Person m1 = men.get(count);
-                for (int i = 0; i < men.size() && m1.getPartner() == -1;) {
-                    // if the chosen man has already proposed and been rejected move to
-                    // the next choice id preference list
-                    if (men.get(count).getPreference(i) == -1) {
-                        i++;
+            Person man = men.get(count);
+            
+            // If the man does not have a partner,
+            if (man.getPartner() == -1) {
+                // then check through the man's preference list
+                for (int f = man.getPreferenceCounter(); f < women.size() && man.getPartner() == -1; f++) {
+                    // Propose to the woman
+                    Person woman = women.get(man.getPreferences()[f]);
+                    proposalCount++;
+                    if (woman.getPartner() == -1) { // if the woman does not have a partner, then this man is her partner
+                        woman.setPartner(man.getID());
+                        man.setPartner(woman.getID());
+                        unmatchedMen--; // one less unmatched man
                     } else {
-                        // if the chosen woman is free get engaged
-                        if (women.get(m1.getPreference(i)).getPartner() == -1) {
-                            women.get(m1.getPreference(i)).setPartner(m1.getID());
-                            men.get(count).setPartner(m1.getPreference(i));
-                            proposalCount++;
-                            unmatchedMen--;
-                        } else {
-                            // propose and ask woman who she prefers. if it is the current man switch
-                            // else move on
-                            Person womanTemp = women.get(m1.getPreference(i));
-                            Person womanTemp2 = women.get(m1.getPreference(i));
-                            Person man1 = men.get(count);
-                            Person man2 = men.get(womanTemp.getPartner());
-                            if (WPrefersMOverM1(womanTemp, man1, man2)) {
-                                men.get(count).setPartner(womanTemp.getID());
-                                men.get(womanTemp.getPartner()).setPartner(-1);
-                                women.get(m1.getPreference(i)).setPartner(men.get(count).getID());
-                                proposalCount++;
-                                // mark the woman who rejected the man as taken in selected mans preference list
-                                // so he does not propose to here twice.
-                                for (int j = 0; j < men.size(); j++) {
-                                    if (men.get(womanTemp2.getPartner()).getPreference(j) == -1) {
-                                        continue;
-                                    } else {
-                                        men.get(womanTemp2.getPartner()).setPreference(j, -1);
-                                        break;
-                                    }
-                                }
-                            } else {
-                                proposalCount++;
-                                // mark the woman who rejected the man as taken in selected mans preference list
-                                // so he does not propose to here twice.
-                                for (int k = 0; k < men.size(); k++) {
-                                    if (men.get(count).getPreference(k) == -1) {
-                                        continue;
-                                    } else {
-                                        men.get(count).setPreference(k, -1);
-                                        break;
-                                    }
-                                }
-                            }
+                        proposalCount++;
+                        Person oldMan = men.get(woman.getPartner());
+                        // else if the woman prefers this man over her new partner, then time to change up.
+                        if (WPrefersMOverM1(woman, man, oldMan)) {
+                            oldMan.setPartner(-1); // i pity this person
+                            woman.setPartner(man.getID());
+                            man.setPartner(woman.getID());
                         }
-                        break;
                     }
+                    man.setPreferenceCounter(1); // prepare for a next preference.
                 }
-            } else if (count == men.size() - 1) {
+            }
+            // prepare to iterate to the next man.
+            count++;
+            if (count == men.size()) {
                 count = 0;
-            } else {
-                count++;
             }
         }
     }
@@ -171,11 +148,20 @@ public class Csc401_project1 {
     // Print stable matchings
     static void printMatches(int startingMan) {
         // Print who proposed first
-        System.out.println("\t=>M" + startingMan + " proposes. It takes " + proposalCount
+        System.out.println("\t=> M" + startingMan + " proposes. It takes " + proposalCount
                 + " proposals to reach the final stable marriage.");
         // Print every matching.
         for (int i = 0; i < men.size(); i++) {
-            System.out.println("\t\t=>M" + men.get(i).getID() + " - " + "F" + men.get(i).getPartner());
+            System.out.println("\t\t=> M" + men.get(i).getID() + " - " + "F" + men.get(i).getPartner());
+        }
+    }
+
+    static void calculateProposalCount() {
+        String str = Integer.toString(proposalCount);
+        if (frequencyMap.get(str) == null) {
+            frequencyMap.put(str, 1);
+        } else {
+            frequencyMap.put(str, (frequencyMap.get(str)) + 1);
         }
     }
 
@@ -183,10 +169,9 @@ public class Csc401_project1 {
     static void resetMatches() {
         for (int i = 0; i < men.size(); i++) { // for every iteration
             men.get(i).setPartner(-1); // reset the partner of the man
+            men.get(i).resetPreferenceCounter();
             women.get(i).setPartner(-1); // reset the partner of the woman
             // reset the matching list with original preferences
-            men.get(i).resetMatchings();
-            women.get(i).resetMatchings();
         }
         proposalCount = 0;
     }
